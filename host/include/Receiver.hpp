@@ -8,7 +8,7 @@
 #include <termios.h>
 #include <unistd.h>
 #include "Codec.hpp"
-#include "msgqueue.h"
+#include "msgqueue.hpp"
 
 class Receiver {
     MsgQueue *receivedQueue;

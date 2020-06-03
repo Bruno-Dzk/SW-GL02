@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <stdio.h>
 #include <thread>
@@ -7,13 +8,16 @@
 #include <termios.h>
 #include <unistd.h>
 #include "Codec.hpp"
-#include "msgqueue.hpp"
+#include "msgqueue.h"
 
 class Receiver {
-    std::thread receiver_thread;
     MsgQueue *receivedQueue;
+    std::thread receiver_thread;
+    int serialPort;
+
     void receive();
 
 public:
     Receiver(MsgQueue &);
+    ~Receiver();
 };

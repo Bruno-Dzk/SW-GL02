@@ -3,7 +3,7 @@
 Receiver::Receiver(MsgQueue &msgQueue) {
     this->receivedQueue = &msgQueue;
     // open port
-    this->serialPort = open("/dev/pts/4", O_RDONLY);
+    this->serialPort = open("/dev/pts/2", O_RDONLY);
     // check for errors while opening port
     if (this->serialPort < 0) {
         std::cout << "Error " << errno << " from open: " << strerror(errno) << std::endl;
@@ -65,6 +65,8 @@ void Receiver::receive() {
     unsigned char numberOfCharacters;
     unsigned char data[28];
 
+    Codec decoder;
+
     while(true) {
         // look for 255 to start message
         do {
@@ -72,7 +74,7 @@ void Receiver::receive() {
             if(msg < 0) {
                 std::cout << "Error while reading from port" << std::endl;
             }
-        } while(int(messageStart) != 255);
+        } while(messageStart != 255);
 
         // read header
         msg = read(this->serialPort, &header, sizeof(header));
@@ -108,6 +110,10 @@ void Receiver::receive() {
                 std::cout << "Error while reading from port" << std::endl;
             }
 
+            for(int i: data) {
+                std::cout<<i<<std::endl;
+            }
+
             // something went wrong, start over
             if(msg != 6) {
                 continue;
@@ -139,11 +145,9 @@ void Receiver::receive() {
 
         // if control sum is correct decode message and push to queue
         if(controlSum == controlSumRead) {
-            // delete control sum in data to send only header + value
-            data[size] = '\0';
             std::string stringData(reinterpret_cast<char *>(data));
-            std::string messageString = headerString + stringData;
-            Message message = Codec.decode(messageString);
+            std::string messageString = char(messageStart) + headerString + stringData;
+            Message message = decoder.Decode(messageString);
             receivedQueue->enqueue(message);
         }
     }

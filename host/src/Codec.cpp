@@ -10,6 +10,7 @@
   (byte & 0x02 ? sum += 1 : sum), \
   (byte & 0x01 ? sum += 1 : sum) 
 
+//Array of the headers as string 
 static const std::string headers[] = {
 	"HRDY",
 	"ERDY",
@@ -24,7 +25,8 @@ static const std::string headers[] = {
 	"HSND"
 };
 
-static const unsigned int masks[] = {
+//Array of masks  to helps convert unsigned int to char array
+static const unsigned int masks[] = { 
 	0b1111111,
 	0b11111110000000,
 	0b111111100000000000000,
@@ -32,6 +34,7 @@ static const unsigned int masks[] = {
 	0b11110000000000000000000000000000
 };
 
+//Default constructor
 Codec::Codec()
 {
 
@@ -39,6 +42,10 @@ Codec::Codec()
 
 std::string Codec::Encode(Message message)
 {
+	/*
+		The function accepts message type data and encodes in a string
+		Adds a start byte and checksum to the frame
+	*/
 	std::string data = "";
 
 	if (headers[message.header] == "HSND") {
@@ -46,7 +53,7 @@ std::string Codec::Encode(Message message)
 	}
 	else {
 		unsigned char bytes[5];
-		//Konwersja 1x uint na 5x char
+		//conversion of uint to char array
 		bytes[0] = message.numeric & masks[0];
 		bytes[1] = (message.numeric & masks[1]) >> 7;
 		bytes[2] = (message.numeric & masks[2]) >> 14;
@@ -63,6 +70,9 @@ std::string Codec::Encode(Message message)
 
 Message Codec::Decode(std::string frame) 
 {
+	/*
+		The function accepts data as a string and decodes into the Message type
+	*/
 	if (frame.substr(1, 4) == "HSND") {
 		return Message(HSND, frame.substr(6, int(frame[5])));
 	}
@@ -73,7 +83,7 @@ Message Codec::Decode(std::string frame)
 		while (frame.substr(1, 4) != headers[i]) {
 			i++;
 		}
-		//Konwersja 5x char na 1x uint
+		//conversion of char array to uint
 		data |= (frame[9] & masks[0]) << 28;
 		data |= (frame[8] & masks[0]) << 21;
 		data |= (frame[7] & masks[0]) << 14;
@@ -84,8 +94,9 @@ Message Codec::Decode(std::string frame)
 	}
 }
 
-int Codec::Checksum(std::string data)//Suma kontrolna (iloœæ bitów które s¹ jedynkami)
+int Codec::Checksum(std::string data)
 {
+	//Counting the checksum from a string of data
 	int sum = 0;
 	for (int i = 0; i < data.length(); i++) {
 		BYTE_TO_BINARY(data[i]);

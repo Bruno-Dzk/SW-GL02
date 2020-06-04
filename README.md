@@ -5,3 +5,6 @@ A simple system connecting a PC to an external FreeRTOS microcontroller through 
 sudo apt-get install libasound2-dev libasound2
 
 To compile add "-lasound -lpthread" options
+
+sudo apt-get install lm-sensors
+sudo apt install sysstat

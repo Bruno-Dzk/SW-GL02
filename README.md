@@ -6,5 +6,6 @@ sudo apt-get install libasound2-dev libasound2
 
 To compile add "-lasound -lpthread" options
 
-sudo apt-get install lm-sensors
-sudo apt install sysstat
+For PerformanceMonitor:
+    sudo apt-get install lm-sensors
+    sudo apt install sysstat

@@ -68,6 +68,7 @@ void Receiver::receive() {
     Codec decoder;
 
     while(true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         // look for 255 to start message
         do {
             msg = read(this->serialPort, &messageStart, 1);

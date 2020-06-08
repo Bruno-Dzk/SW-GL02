@@ -34,7 +34,7 @@ class Transmitter {
 	// an atomic boolean variable, that has to be passed using std::ref 
 	// to the class constructor from the main function in order to control the 
 	// workflow of the thread
-	std::atomic<bool> program_status;
+	std::atomic<bool> *program_status;
 
 public:
 	// param. constructor

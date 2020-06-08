@@ -1,10 +1,12 @@
 #include "Receiver.hpp"
 
-Receiver::Receiver(MsgQueue &msgQueue) {
+Receiver::Receiver(MsgQueue &msgQueue, std::atomic<bool> &isRunning) {
+
     this->receivedQueue = &msgQueue;
     // open port
     this->serialPort = open("/dev/pts/2", O_RDONLY);
     // check for errors while opening port
+    this->isRunning = &isRunning;
     if (this->serialPort < 0) {
         std::cout << "Error " << errno << " from open: " << strerror(errno) << std::endl;
         exit(-1);
@@ -13,6 +15,7 @@ Receiver::Receiver(MsgQueue &msgQueue) {
 }
 
 Receiver::~Receiver() {
+
     this->receiver_thread.join();
     // close port
     close(this->serialPort);
@@ -46,8 +49,8 @@ void Receiver::receive() {
     tty.c_oflag &= ~OPOST; // prevent special interpretation of output
     tty.c_oflag &= ~ONLCR; // prevent conversion of newline to carriage
 
-    tty.c_cc[VTIME] = 10;
-    tty.c_cc[VMIN] = 11; // wait for at least 11 bytes
+    tty.c_cc[VTIME] = 5;
+    tty.c_cc[VMIN] = 0;
 
     // set baud rate at 9600
     cfsetispeed(&tty, B9600);
@@ -66,9 +69,8 @@ void Receiver::receive() {
     unsigned char data[28];
 
     Codec decoder;
-
-    while(true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    while(this->isRunning->load()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
         // look for 255 to start message
         do {
             msg = read(this->serialPort, &messageStart, 1);
@@ -109,10 +111,6 @@ void Receiver::receive() {
             msg = read(this->serialPort, &data, 6);
             if(msg < 0) {
                 std::cout << "Error while reading from port" << std::endl;
-            }
-
-            for(int i: data) {
-                std::cout<<i<<std::endl;
             }
 
             // something went wrong, start over

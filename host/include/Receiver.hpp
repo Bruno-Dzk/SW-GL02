@@ -13,11 +13,12 @@
 class Receiver {
     MsgQueue *receivedQueue;
     std::thread receiver_thread;
+    std::atomic<bool> *isRunning;
     int serialPort;
 
     void receive();
 
 public:
-    Receiver(MsgQueue &);
+    Receiver(MsgQueue &, std::atomic<bool> &);
     ~Receiver();
 };

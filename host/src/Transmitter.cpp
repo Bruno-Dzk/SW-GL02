@@ -13,7 +13,7 @@ Transmitter::Transmitter(std::atomic<bool>& program_is_running, MsgQueue &msgQue
 	// thread as well.
 	// the only condition, is that these changes SHOULD BE PROVIDED in 
 	// the main function
-	this->program_status = program_is_running;
+	this->program_status = &program_is_running;
 }
 
 	void Transmitter::send()
@@ -85,7 +85,7 @@ Transmitter::Transmitter(std::atomic<bool>& program_is_running, MsgQueue &msgQue
 
 		// while the controlling variable is True - the loop runs
 		// otherwise - it stops
-		while(this->program_status)
+		while(this->program_status->load())
 		{
 			// get message from the queue
 			mess = toSendQueue->dequeue();
@@ -108,7 +108,7 @@ Transmitter::Transmitter(std::atomic<bool>& program_is_running, MsgQueue &msgQue
 			}
 
 			// make a thread sleep for a while
-			std::this_thread::sleep_for(std::chrono::milliseconds(200));
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 
 	}

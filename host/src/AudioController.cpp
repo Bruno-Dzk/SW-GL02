@@ -20,8 +20,16 @@ AudioController::AudioController(const char* card, const char* selemName)
 
 void AudioController::setLevel(int volume)
 {
+    long inputMax = 1024;
+    
+    if (volume < 0)
+        volume = 0;
+    
+    else if (volume > inputMax)
+        volume = inputMax;
+    
     snd_mixer_selem_set_playback_volume_all(pElem,
-        static_cast<long>(volume) * maxVol / 1023);
+        static_cast<long>(volume) * maxVol / inputMax);
 }
 
 int AudioController::getLevel()

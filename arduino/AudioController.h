@@ -9,15 +9,15 @@ public:
     AudioController() {}
     AudioController(int, int[NUMBER_OF_OUTPUTS]);
 
-    void initInput(int pin) { this->inputPin = inputPin; } // potencjometr
-    void initOutputs(int[NUMBER_OF_OUTPUTS]); // diody
+    void initInput(int pin) { this->inputPin = inputPin; } // potentiometer
+    void initOutputs(int[NUMBER_OF_OUTPUTS]); // diodes
     
-    int getInputVal() { analogRead(inputPin); }
-    void setOutputs(int); // ustawienie diód w zależności od głośności
+    int getInputVal() { return analogRead(inputPin); }
+    void setOutputs(int); // show volume on diodes
 
 private:
-    int inputPin; // port potencjometru
-    int outputPins[NUMBER_OF_OUTPUTS]; // porty diód
+    int inputPin;
+    int outputPins[NUMBER_OF_OUTPUTS];
 };
 
 ////////////////////////////////////////////////////////////////////////////
@@ -38,7 +38,7 @@ void AudioController::initOutputs(int pins[NUMBER_OF_OUTPUTS])
     }
 }
 
-void AudioController::setOutputs(int volume) // głośność od 0 do 100
+void AudioController::setOutputs(int volume) // volume range [0, 100]
 {
     int volStep = 100 / NUMBER_OF_OUTPUTS;
         

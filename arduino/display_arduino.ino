@@ -1,4 +1,3 @@
-
 #include <Arduino_FreeRTOS.h>
 #include <queue.h>
 
@@ -32,7 +31,7 @@ struct Message
 LiquidCrystal_I2C lcd(0x3F,2,1,0,4,5,6,7,3,POSITIVE);
 String inData;
 QueueHandle_t xQueue1;
-Message mes={HGET,5,"cos"};
+Message mes={HSND,5,"cos"};
 
 
 
@@ -100,54 +99,11 @@ void TaskDisplay(void * pvParameters) {
       lcd.setCursor(14, 2);
       lcd.print("%");
       }
-      else if(mes.header==9){
-        switch (mes.numeric){
-          case 0:
-           lcd.clear();
-           lcd.setCursor(0, 0);
-           lcd.print("Button help No. 0: ");     
-           break;
-          case 1:
-           lcd.clear();
-           lcd.setCursor(0, 0);
-           lcd.print("Button help No. 1: ");         
-           break;
-          case 2:
-           lcd.clear();
-           lcd.setCursor(0, 0);
-           lcd.print("Button help No. 2: ");          
-           break;
-          case 3:
-           lcd.clear();
-           lcd.setCursor(0, 0);
-           lcd.print("Button help No. 3: ");           
-           break; 
-          case 4:
-           lcd.clear();
-           lcd.setCursor(0, 0);
-           lcd.print("Button help No. 4: ");          
-           break; 
-          case 5:
-           lcd.clear();
-           lcd.setCursor(0, 0);
-           lcd.print("Button help No. 5: ");
-           break;
-          case 6:
-           lcd.clear();
-           lcd.setCursor(0, 0);
-           lcd.print("Button help No. 6: ");
-           break;   
-          case 7:
-           lcd.clear();
-           lcd.setCursor(0, 0);
-           lcd.print("Button help No. 7: ");
-           break;
-          case 8:
-           lcd.clear();
-           lcd.setCursor(0, 0);
-           lcd.print("Button help No. 8: ");
-           break;                                 
-        }
+      else if(mes.header==10){
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print(mes.text);
+       
         
       }
     }

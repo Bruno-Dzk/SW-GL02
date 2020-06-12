@@ -2,26 +2,22 @@
 #include "PerformanceMonitor.hpp"
 #include <stdio.h>
 #include <iostream>
-#include <string>   
-using namespace std;
+#include <string>
 
 /**
  * Returns output of given command as a string
  */
-std::string PerformanceMonitor::GetStdoutFromCommand(std::string cmd)
+std::string PerformanceMonitor::getStdoutFromCommand(std::string cmd)
 {
-    string data;
+    std::string data;
     FILE * stream;
     const int max_buffer = 256;
     char buffer[max_buffer];
     stream = popen(cmd.c_str(), "r");
     if(stream)
     {
-        while (!feof(stream))
-        {
-            if(fgets(buffer,max_buffer,stream) != NULL) data.append(buffer);
-                pclose(stream);
-        }
+        if(fgets(buffer,max_buffer,stream) != NULL) data.append(buffer);
+            pclose(stream);
         
     }
     return data;
@@ -33,11 +29,11 @@ std::string PerformanceMonitor::GetStdoutFromCommand(std::string cmd)
  */
 int PerformanceMonitor::getCPUUsage()
 {
-    string cmd = "mpstat | awk '$12 ~ /[0-9.]+/ { print 100 - $12 }'";
-    string sCpu = this->GetStdoutFromCommand(cmd);
-    double dCpu = stod(sCpu);
-    cout<< static_cast<int>(dCpu+0.5)<<endl;
-    return 0;
+    std::string cmd = "mpstat | egrep -v '^Linux|^$' |  awk -v c='%idle' '{print $NF}' | sed '1d' | awk '{print 100 - $1}'";
+    std::string sCpu = this->getStdoutFromCommand(cmd);
+    return stoi(sCpu);
+    //double dCpu = std::stod(sCpu); wersja z zaokraglaniem
+    //return static_cast<int>(dCpu+0.5);
 }
 /**
  * Checks ram usage using GetStdoutFromCommand()
@@ -45,11 +41,11 @@ int PerformanceMonitor::getCPUUsage()
  */
 int PerformanceMonitor::getRAMUsage()
 {
-    string cmd = "free | grep Mem | awk '{print $3/$2 * 100.0}'";
-    string sRam = this->GetStdoutFromCommand(cmd);
-    double dRam = stod(sRam);
-    cout<< static_cast<int>(dRam+0.5)<<endl;
-    return 0;
+    std::string cmd = "free | grep Mem | awk '{print $3/$2 * 100.0}'";
+    std::string sRam = this->getStdoutFromCommand(cmd);
+    return stoi(sRam);
+    //double dRam = stod(sRam); wersja z zaokraglaniem
+    //return static_cast<int>(dRam+0.5);
 }
 /**
  * Checks cpu tem using GetStdoutFromCommand()
@@ -58,9 +54,9 @@ int PerformanceMonitor::getRAMUsage()
  */
 int PerformanceMonitor::getCPUTemp()
 {
-    string cmd = "sensors -u | grep -A 1 'Package id 0:' | sed '1d' | awk '{print $2}'";
-    string stemp = this->GetStdoutFromCommand(cmd);
-    double dtemp = stod(stemp);
-    cout<<static_cast<int>(dtemp+0.5)<<endl;
-    return 0;
+    std::string cmd = "sensors -u | grep -A 1 'Package id 0:' | sed '1d' | awk '{print $2}'";
+    std::string sTemp = this->getStdoutFromCommand(cmd);
+    return stoi(sTemp);
+    //double dTemp = stod(sTemp); wersja z zaokraglaniem
+    //return static_cast<int>(dTemp+0.5);
 }

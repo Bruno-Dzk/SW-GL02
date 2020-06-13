@@ -6,18 +6,18 @@
 
 int VideoColorMonitor::getColor()
 {
-	// For better performance check every N'th pixels row
-	int N = 10;
+    // For better performance check every N'th pixels row
+    int N = 10;
 
-	// Imagemagick is required for screenshot
-	system("import -window root screenshot.bmp");
-	
-	FILE* image = fopen("screenshot.bmp", "rb");
+    // Imagemagick is required for screenshot
+    system("import -window root screenshot.bmp");
 
-	if(image == NULL)
-		throw "Image loading exception";
+    FILE* image = fopen("screenshot.bmp", "rb");
 
-	unsigned char info[54];
+    if(image == NULL)
+        throw "Image loading exception";
+
+    unsigned char info[54];
     fread(info, sizeof(unsigned char), 54, image); // read the 54-byte header
 
     // extract image height and width from header
@@ -36,10 +36,10 @@ int VideoColorMonitor::getColor()
     int loop_limit = height/N;
 
     if(N > height)
-    	throw "N must be lower than image height";
+        throw "N must be lower than image height";
 
    	int step = row_padded*N;
-	for(int i = 0; i < loop_limit; i++)
+    for(int i = 0; i < loop_limit; i++)
     {
         fread(data, sizeof(unsigned char), row_padded, image);
         for(int j = 0; j < width*3; j += 3)
@@ -62,12 +62,12 @@ int VideoColorMonitor::getColor()
 
     // Color decoding:
     // int red   = (average_color>>16) & 0xFF;
-	// int green = (average_color>>8) & 0xFF;
-	// int blue  = (average_color) & 0xFF;
+    // int green = (average_color>>8) & 0xFF;
+    // int blue  = (average_color) & 0xFF;
 
     free(data);
     fclose(image);
     system("rm screenshot.bmp");
 
-	return average_color;
+    return average_color;
 }

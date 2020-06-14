@@ -92,10 +92,12 @@ Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_runni
 			str_message = codec.Encode(mess);
 
 			// create a chartable of the suiting size
-			char message_char_table[str_message.size() + 1];
+			char message_char_table[str_message.size()];
 
 			// convert a string message to a char table
-			strcpy(message_char_table, str_message.c_str());
+			for(int i = 0; i < str_message.size(); i++) {
+                message_char_table[i] = str_message[i];
+			}
 
 			// attempt to send a message to a port
 			// if it fails - print an error message

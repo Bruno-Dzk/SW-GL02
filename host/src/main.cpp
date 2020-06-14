@@ -1,35 +1,25 @@
 #include "AudioController.hpp"
+#include "Receiver.hpp"
+#include "Transmitter.hpp"
 #include "msgqueue.hpp"
 #include <thread>
 #include <iostream>
-
-void testReceiver(MsgQueue&);
+#include <atomic>
 
 int main(){
-    MsgQueue msgQueue;
+    std::atomic<bool> is_running(true);
+    MsgQueue to_send_queue;
+    MsgQueue received_queue;
+    Transmitter transmitter(to_send_queue, is_running);
+    Receiver receiver(received_queue, is_running);
     int counter = 0;
-    auto thread1 = std::thread(testReceiver, std::ref(msgQueue));
     for (;;) {
-        msgQueue.enqueue(Message(HGET, counter));
-        msgQueue.enqueue(Message(HSND, "Hello world " + std::to_string(counter)));
+        Message test(ASND, counter);
+        to_send_queue.enqueue(test);
+        test = received_queue.dequeue();
+        std::cout << test.numeric << "\n";
         counter++;
-        if (counter >= 16000) {
-            counter = 0;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
-}
-
-void testReceiver(MsgQueue & mq){
-    for (;;) {
-        Message message = mq.dequeue();
-		switch (message.header) {
-		case HGET:
-			std::cout << "Numeric: " << message.numeric << std::endl;
-			break;
-		case HSND:
-			std::cout << "Text: " << message.text << std::endl;
-			break;
-		}
-	}
+    is_running.store(false);
 }

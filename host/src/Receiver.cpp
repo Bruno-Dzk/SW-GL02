@@ -4,7 +4,7 @@ Receiver::Receiver(MsgQueue &msgQueue, std::atomic<bool> &isRunning) {
 
     this->receivedQueue = &msgQueue;
     // open port
-    this->serialPort = open("/dev/pts/4", O_RDONLY);
+    this->serialPort = open("/dev/ttyACM0", O_RDONLY);
     // check for errors while opening port
     this->isRunning = &isRunning;
     if (this->serialPort < 0) {
@@ -74,6 +74,7 @@ void Receiver::receive() {
         // look for 255 to start message
         do {
             msg = read(this->serialPort, &messageStart, 1);
+            std::cout << int(messageStart) << std::endl;
             if(msg < 0) {
                 std::cout << "Error while reading from port" << std::endl;
             }

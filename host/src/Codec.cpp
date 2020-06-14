@@ -66,8 +66,6 @@ std::string Codec::Encode(Message message)
 		}
 	}
 
-	std::cout << (int)Checksum(headers[message.header] + data) << std::endl;
-
 	return char(255) + headers[message.header] + data + char(Checksum(headers[message.header] + data));
 }
 

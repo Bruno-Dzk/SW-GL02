@@ -142,9 +142,6 @@ void Receiver::receive() {
             }
         }
 
-        std::cout << (int)controlSum << std::endl;
-        std::cout << (int)controlSumRead << std::endl;
-
         // if control sum is correct decode message and push to queue
         if(controlSum == controlSumRead) {
             std::string stringData(reinterpret_cast<char *>(data));

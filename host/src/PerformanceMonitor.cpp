@@ -1,8 +1,5 @@
 #define _GLIBCXX_USE_CXX11_ABI 0
 #include "PerformanceMonitor.hpp"
-#include <stdio.h>
-#include <iostream>
-#include <string>
 
 /**
  * Returns output of given command as a string
@@ -54,7 +51,7 @@ int PerformanceMonitor::getRAMUsage()
  */
 int PerformanceMonitor::getCPUTemp()
 {
-    std::string cmd = "sensors -u | grep -A 1 'Package id 0:' | sed '1d' | awk '{print $2}'";
+    std::string cmd = "sensors | grep 'Package id 0:' | awk '{print $4}'";
     std::string sTemp = this->getStdoutFromCommand(cmd);
     return stoi(sTemp);
     //double dTemp = stod(sTemp); wersja z zaokraglaniem

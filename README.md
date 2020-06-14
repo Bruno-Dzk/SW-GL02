@@ -9,3 +9,6 @@ To compile add "-lasound -lpthread" options
 For PerformanceMonitor:
     sudo apt-get install lm-sensors
     sudo apt install sysstat
+
+For VideoColorMonitor, if not pre-installed:
+    sudo apt-get install imagemagick

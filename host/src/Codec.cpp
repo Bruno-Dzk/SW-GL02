@@ -1,4 +1,5 @@
 #include "Codec.hpp"
+#include <iostream>
 
 #define BYTE_TO_BINARY(byte)  \
   (byte & 0x80 ? sum += 1 : sum), \
@@ -64,6 +65,8 @@ std::string Codec::Encode(Message message)
 			data += bytes[i];
 		}
 	}
+
+	std::cout << (int)Checksum(headers[message.header] + data) << std::endl;
 
 	return char(255) + headers[message.header] + data + char(Checksum(headers[message.header] + data));
 }

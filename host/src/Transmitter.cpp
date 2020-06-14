@@ -1,6 +1,6 @@
 #include "Transmitter.hpp"
 
-Transmitter::Transmitter(std::atomic<bool>& program_is_running, MsgQueue &msgQueue)
+Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_running)
 {
 	this->toSendQueue = &msgQueue;
 
@@ -19,8 +19,6 @@ Transmitter::Transmitter(std::atomic<bool>& program_is_running, MsgQueue &msgQue
 	void Transmitter::send()
 
 	{
-		Message mess;
-		
 		// Codec class instance for encoding messages
 		Codec codec;
 
@@ -29,7 +27,7 @@ Transmitter::Transmitter(std::atomic<bool>& program_is_running, MsgQueue &msgQue
 		int bits_written = 0;
 
 		// open serial port in write_only mode 
-		this->serial_port_fd = open("/dev/ttyACMO", O_WRONLY);
+		this->serial_port_fd = open("/dev/pts/5", O_WRONLY);
 
 		// if any error occured while opening the port - print a message and exit the program
 		if (this->serial_port_fd < 0)
@@ -88,16 +86,16 @@ Transmitter::Transmitter(std::atomic<bool>& program_is_running, MsgQueue &msgQue
 		while(this->program_status->load())
 		{
 			// get message from the queue
-			mess = toSendQueue->dequeue();
+			Message mess = toSendQueue->dequeue();
 
 			// encode it with a Codec class method
 			str_message = codec.Encode(mess);
 
 			// create a chartable of the suiting size
-			unsigned char message_char_table[str_message.size() + 1];
+			char message_char_table[str_message.size() + 1];
 
 			// convert a string message to a char table
-			std::strcpy(message_char_table, str_message.c_str());
+			strcpy(message_char_table, str_message.c_str());
 
 			// attempt to send a message to a port
 			// if it fails - print an error message
@@ -108,7 +106,7 @@ Transmitter::Transmitter(std::atomic<bool>& program_is_running, MsgQueue &msgQue
 			}
 
 			// make a thread sleep for a while
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
 
 	}

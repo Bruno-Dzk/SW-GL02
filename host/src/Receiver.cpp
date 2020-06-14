@@ -4,7 +4,7 @@ Receiver::Receiver(MsgQueue &msgQueue, std::atomic<bool> &isRunning) {
 
     this->receivedQueue = &msgQueue;
     // open port
-    this->serialPort = open("/dev/pts/2", O_RDONLY);
+    this->serialPort = open("/dev/pts/4", O_RDONLY);
     // check for errors while opening port
     this->isRunning = &isRunning;
     if (this->serialPort < 0) {
@@ -69,7 +69,7 @@ void Receiver::receive() {
     unsigned char data[28];
 
     Codec decoder;
-    while(this->isRunning->load()) {
+    while(isRunning) {
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
         // look for 255 to start message
         do {
@@ -141,6 +141,9 @@ void Receiver::receive() {
                 n >>= 1;
             }
         }
+
+        std::cout << (int)controlSum << std::endl;
+        std::cout << (int)controlSumRead << std::endl;
 
         // if control sum is correct decode message and push to queue
         if(controlSum == controlSumRead) {

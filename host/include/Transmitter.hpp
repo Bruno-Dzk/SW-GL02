@@ -38,7 +38,7 @@ class Transmitter {
 
 public:
 	// param. constructor
-	Transmitter(std::atomic<bool>&, MsgQueue &);
+	Transmitter(MsgQueue &, std::atomic<bool>&);
 
 	// destructor
 	~Transmitter();

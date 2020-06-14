@@ -15,13 +15,15 @@ void setup()
     Serial.begin(9600);
 }
 
+int counter = 0;
+
 void loop()
 {
     Message mes(HSND,"CHUJ");
     String coded = codec_encode(mes);
-    for(char c : coded){
-      Serial.write(c);
-      delay(1);
-    }
+    char * to_send = new char[coded.length()];
+    coded.toCharArray(to_send, coded.length());
+    Serial.write(to_send);
+    counter += 1;
     delay(500);
 }

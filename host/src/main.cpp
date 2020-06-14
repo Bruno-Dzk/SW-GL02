@@ -59,7 +59,7 @@ int main(){
     Receiver receiver(received_queue, is_running);
     MsgQueue to_send_queue;
     // Transmitter transmitter(to_send_queue, is_running);
-    AudioController audio_controller;
+    //AudioController audio_controller;
     // std::thread outcoming_thread(outcoming_thread_function, std::ref(to_send_queue));
     for (;;) {
         Message received = received_queue.dequeue();
@@ -77,7 +77,8 @@ int main(){
                 std::cout << received.numeric << std::endl;
                 break;
             case ASET:
-                audio_controller.setLevel(received.numeric);
+                std::cout << received.numeric << std::endl;
+                //audio_controller.setLevel(received.numeric);
                 break;
             case KEYP:
                 //keyctrl

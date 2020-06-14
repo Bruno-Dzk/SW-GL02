@@ -70,18 +70,20 @@ void Receiver::receive() {
 
     Codec decoder;
     while(isRunning) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
-        // look for 255 to start message
+        // std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        // msg = read(this->serialPort, &byte, 1)
+        // std::cout << int
+        //look for 255 to start message
         do {
             msg = read(this->serialPort, &messageStart, 1);
-            std::cout << int(messageStart) << std::endl;
             if(msg < 0) {
                 std::cout << "Error while reading from port" << std::endl;
             }
+            std::cout << int(messageStart) << std::endl;
         } while(messageStart != 255);
 
         // read header
-        msg = read(this->serialPort, &header, sizeof(header));
+        msg = read(this->serialPort, &header, 4);
         if(msg < 0) {
             std::cout << "Error while reading from port" << std::endl;
         }
@@ -89,6 +91,7 @@ void Receiver::receive() {
         int size;
         memset(&data, '\0', sizeof(data));
         std::string headerString(header, header + sizeof(header));
+        std::cout << headerString << std::endl;
         if(headerString == "HSND") {
             // header HSND means that help for buttons will be received
             msg = read(this->serialPort, &numberOfCharacters, 1);

@@ -54,7 +54,7 @@ void outcoming_thread_function(MsgQueue & to_send_queue){
         perfmon_acc += delta.count();
         audio_acc += delta.count();
         vcolor_acc += delta.count();
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         t1 = t2;
 	}
 }
@@ -62,7 +62,7 @@ void outcoming_thread_function(MsgQueue & to_send_queue){
 int main(){
     std::atomic<bool> is_running(true);
     MsgQueue received_queue;
-    // Receiver receiver(received_queue, is_running);
+    //Receiver receiver(received_queue, is_running);
     MsgQueue to_send_queue;
     Codec codec;
     Transmitter transmitter(to_send_queue, is_running);
@@ -78,7 +78,7 @@ int main(){
         //     //     std::cout << received.numeric << std::endl;
         //     //     break;
         //     case ASET:
-        //         std::cout << "RCV: " << received.numeric << std::endl;
+        //         std::cout << "a RCV: " << received.numeric << std::endl;
         //         audio_controller.setLevel(received.numeric);
         //         break;
         //     case VSND:

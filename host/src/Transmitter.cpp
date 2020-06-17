@@ -27,7 +27,7 @@ Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_runni
 		int bits_written = 0;
 
 		// open serial port in write_only mode 
-		this->serial_port_fd = open("/dev/ttyACM2", O_WRONLY);
+		this->serial_port_fd = open("/dev/ttyACM0", O_WRONLY);
 
 		// if any error occured while opening the port - print a message and exit the program
 		if (this->serial_port_fd < 0)
@@ -100,6 +100,11 @@ Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_runni
 					message_char_table[i] = str_message[i];
 				}
 
+				// for(char c : message_char_table){
+				// 	std::cout << int(c) << " ";
+				// }
+				// std::cout << "\n";
+
 				// attempt to send a message to a port
 				// if it fails - print an error message
 				if (write(this->serial_port_fd, message_char_table, sizeof(message_char_table)) < 0)
@@ -107,7 +112,7 @@ Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_runni
 					std::cout << "Error :" << errno << "occured while attempting to send message to a posrt" << std::endl;
 					std::cout << "Error string :" << strerror(errno) << std::endl;
 				}
-				// char rc [1] = {char(254)};
+				// char rc [1] = {char(189)};
 				// if(write(this->serial_port_fd, rc, 1) < 0)
 				// {
 				// 	std::cout << "Error :" << errno << "occured while attempting to send message to a posrt" << std::endl;

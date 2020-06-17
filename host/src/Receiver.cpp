@@ -74,13 +74,13 @@ void Receiver::receive() {
 
     Codec decoder;
     while(isRunning) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         do {
             bytes_read = read(this->serialPort, &messageStart, 1);
             if(bytes_read > 0){
                 std::cout << "start: " << int(messageStart) << std::endl;
             }
-        } while(messageStart != 255);
+        } while(messageStart != 254);
 
         // read header
         int read_for_header = 0;
@@ -115,7 +115,7 @@ void Receiver::receive() {
         } while(read_for_data < numberOfBytes);
         data[numberOfBytes] = '\0';
         read(this->serialPort, &controlSumRead, 1);
-        // std::cout << "cs: " << int(controlSumRead) << std::endl;
+        std::cout << "cs: " << int(controlSumRead) << std::endl;
         
         // int size;
         // memset(&data, '\0', sizeof(data));
@@ -173,7 +173,7 @@ void Receiver::receive() {
                 n >>= 1;
             }
         }
-        //std::cout << "TCS: " << int(controlSum) << std::endl;
+        std::cout << "TCS: " << int(controlSum) << std::endl;
 
         // std::cout << "dupa: " << int(messageStart) << std::endl;
 

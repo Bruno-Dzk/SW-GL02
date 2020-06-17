@@ -51,23 +51,21 @@ byte * codec_encode(Message & message, size_t & encoded_size)
 
 	if (headers[message.header] == "HSND") {
     datasize = 1 + message.text.length();
+    data = new byte [datasize];
     data[0] = message.text.length();
     for(int i = 1; i < datasize; i++){
        data[i] = message.text[i];
     }
 	}
 	else {
-		byte * bytes = new byte[5];
-		//conversion of uint to char array
-		bytes[0] = message.numeric & masks[0];
-		bytes[1] = (message.numeric & masks[1]) >> 7;
-		bytes[2] = (message.numeric & masks[2]) >> 14;
-		bytes[3] = (message.numeric & masks[3]) >> 21;
-		bytes[4] = (message.numeric & masks[4]) >> 28;
-
-    data = bytes;
-    delete [] bytes;
     datasize = 5;
+		data = new byte[datasize];
+		//conversion of uint to char array
+		data[0] = message.numeric & masks[0];
+		data[1] = (message.numeric & masks[1]) >> 7;
+		data[2] = (message.numeric & masks[2]) >> 14;
+		data[3] = (message.numeric & masks[3]) >> 21;
+		data[4] = (message.numeric & masks[4]) >> 28;
 	}
 
   byte * header = new byte[4];
@@ -77,7 +75,7 @@ byte * codec_encode(Message & message, size_t & encoded_size)
 
   encoded_size = 1 + 4 + datasize + 1;
   byte * encoded = new byte[encoded_size];
-  encoded[0] = 255;
+  encoded[0] = 254;
   memcpy(encoded + 1, header, 4);
   memcpy(encoded + 5, data, datasize);
   byte * to_checksum = new byte[datasize + 4];
@@ -86,7 +84,8 @@ byte * codec_encode(Message & message, size_t & encoded_size)
   delete [] header;
   /*delete [] data;*/
   encoded[encoded_size - 1] = checksum(to_checksum, datasize + 4);
-  delete to_checksum;
+  delete [] to_checksum;
+  delete [] data;
 
 	return encoded;
 }

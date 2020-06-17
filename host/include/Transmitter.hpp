@@ -35,10 +35,11 @@ class Transmitter {
 	// to the class constructor from the main function in order to control the 
 	// workflow of the thread
 	std::atomic<bool> *program_status;
+	std::atomic<bool> *arduino_running;
 
 public:
 	// param. constructor
-	Transmitter(MsgQueue &, std::atomic<bool>&);
+	Transmitter(MsgQueue &, std::atomic<bool>&, std::atomic<bool>&);
 
 	// destructor
 	~Transmitter();

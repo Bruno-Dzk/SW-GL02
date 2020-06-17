@@ -54,44 +54,44 @@ void outcoming_thread_function(MsgQueue & to_send_queue){
         perfmon_acc += delta.count();
         audio_acc += delta.count();
         vcolor_acc += delta.count();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(20000));
         t1 = t2;
 	}
 }
 
 int main(){
     std::atomic<bool> is_running(true);
+    std::atomic<bool> arduino_running(true);
     MsgQueue received_queue;
     Receiver receiver(received_queue, is_running);
     MsgQueue to_send_queue;
     Codec codec;
-    Transmitter transmitter(to_send_queue, is_running);
+    Transmitter transmitter(to_send_queue, is_running, arduino_running);
     AudioController audio_controller;
     std::thread outcoming_thread(outcoming_thread_function, std::ref(to_send_queue));
     for (;;) {
-        // Message received = received_queue.dequeue();
-        // switch(received.header){
-        //     // case ASND:
-        //     //     std::cout << received.numeric << std::endl;
-        //     //     break;
-        //     // case TSND:
-        //     //     std::cout << received.numeric << std::endl;
-        //     //     break;
-        //     case ASET:
-        //         std::cout << "a RCV: " << received.numeric << std::endl;
-        //         audio_controller.setLevel(received.numeric);
-        //         break;
-        //     case VSND:
-        //         std::cout << "RCV: " << received.numeric << std::endl;
-        //         break;
-        //     case KEYP:
-        //         //keyctrl
-        //         break;
-        //     case HGET:
-        //         //keyctrl
-        //         break;
-        // }
-        // std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        Message received = received_queue.dequeue();
+        switch(received.header){
+            // case ASND:
+            //     std::cout << received.numeric << std::endl;
+            //     break;
+            case HSND:
+                std::cout << received.text << std::endl;
+                break;
+            case ASET:
+                std::cout << "a RCV: " << received.numeric << std::endl;
+                audio_controller.setLevel(received.numeric);
+                break;
+            case VSND:
+                std::cout << "RCV: " << received.numeric << std::endl;
+                break;
+            case KEYP:
+                //keyctrl
+                break;
+            case HGET:
+                //keyctrl
+                break;
+        }
 	}
     is_running.store(false);
 }

@@ -23,7 +23,7 @@ void setup()
 
 void send_message(){
   unsigned long val = analogRead(2);
-  Message mes(ASET,val);
+  Message mes(HSND,"EE");
   size_t datasize;
   byte * encoded= codec_encode(mes, datasize);
   /*for(int i = 0; i < datasize; i++){
@@ -44,9 +44,19 @@ bool host_ready = false;
 
 void loop()
 {
-  byte messageStart;
+  if (true) {
+    // read the incoming byte:
+    byte incomingByte = Serial.read();
+
+    // say what you got:
+    Serial.println(incomingByte, DEC);
+  }
+  /*byte messageStart;
     do {
-      messageStart = Serial.read();
+      if(Serial.available() > 0){
+        messageStart = Serial.read();
+        Serial.println(int(messageStart));
+      }
       //if(Serial.available() > 0){
         //Serial.println(int(messageStart)); 
       //}
@@ -56,21 +66,28 @@ void loop()
     int read_for_header = 0;
     byte header [4];
     do {
+      if(Serial.available() > 0){
         byte read_byte = Serial.read();
-        if(read_byte != 255){
-          header[read_for_header] = read_byte;
-          read_for_header += 1;
-        }
+        header[read_for_header] = read_byte;
+        read_for_header += 1;
+      }
     } while(read_for_header < 4);
-    /*for(int i = 0; i < 4; i++){
+    for(int i = 0; i < 4; i++){
       Serial.print(char(header[i]));
       Serial.print(' ');
     }
-    Serial.print('\n');*/
+    Serial.print('\n');
 
     int no_of_bytes;
     if(false){
-        no_of_bytes = Serial.read();
+        int read_for_no = 0;
+        do {
+          if(Serial.available() > 0){
+            byte read_byte = Serial.read();
+            no_of_bytes = read_byte;
+            read_for_no += 1;
+          }
+        } while(read_for_no < 1);
     }else{
         no_of_bytes = 5;
     }       
@@ -78,12 +95,12 @@ void loop()
     byte * data = new byte[no_of_bytes];
     int read_for_data = 0;
     do {
+      if(Serial.available() > 0){
         byte read_byte = Serial.read();
-        if(read_byte != 255){
-          data[read_for_data] = read_byte;
-          read_for_data += 1;
-        }
-    } while(read_for_data < no_of_bytes);
+        data[read_for_data] = read_byte;
+        read_for_data += 1;
+      }
+    } while(read_for_data < no_of_bytes);*/
     
 
     ////////////////
@@ -94,9 +111,17 @@ void loop()
     Serial.print('\n');*/
     /////////////
     
-    byte control_sum = Serial.read();
+    /*byte control_sum;
+    int read_for_sum = 0;
+        do {
+          if(Serial.available() > 0){
+            byte read_byte = Serial.read();
+            control_sum = read_byte;
+            read_for_sum += 1;
+          }
+        } while(read_for_sum < 1);
     Message test = codec_decode(header, data, no_of_bytes);
-    /*Serial.println(test.text);*/
+    /*Serial.println(test.text);
     if(test.header == HRDY && !host_ready){
       host_ready = true;
     }
@@ -104,7 +129,8 @@ void loop()
     delete [] data;
     if(host_ready){
       send_message();
-    }
+    }*/
+    delay(500);
 }
 
 void comment()

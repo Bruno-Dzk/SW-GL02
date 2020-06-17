@@ -70,22 +70,19 @@ byte * codec_encode(Message & message, size_t & encoded_size)
     datasize = 5;
 	}
 
-  byte * header = new byte[5];
+  byte * header = new byte[4];
   for(int i = 0; i < 4; i++){
     header[i] = byte(headers[message.header][i]);
   }
-  header[5] = '\0';
 
   encoded_size = 1 + 4 + datasize + 1;
-  byte * encoded = new byte[encoded_size + 1];
+  byte * encoded = new byte[encoded_size];
   encoded[0] = 255;
   memcpy(encoded + 1, header, 4);
   memcpy(encoded + 5, data, datasize);
-  encoded[encoded_size] = '\0';
-  byte * to_checksum = new byte[datasize + 5];
+  byte * to_checksum = new byte[datasize + 4];
   memcpy(to_checksum, header, 4);
   memcpy(to_checksum + 4, data, datasize);
-  to_checksum[datasize+4] = '\0';
   delete [] header;
   /*delete [] data;*/
   encoded[encoded_size - 1] = checksum(to_checksum, datasize + 4);

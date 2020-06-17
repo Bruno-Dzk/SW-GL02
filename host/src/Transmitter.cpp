@@ -100,10 +100,10 @@ Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_runni
 					message_char_table[i] = str_message[i];
 				}
 
-				// for(char c : message_char_table){
-				// 	std::cout << int(c) << " ";
-				// }
-				// std::cout << "\n";
+				for(char c : message_char_table){
+					std::cout << int(c) << " ";
+				}
+				std::cout << "\n";
 
 				// attempt to send a message to a port
 				// if it fails - print an error message

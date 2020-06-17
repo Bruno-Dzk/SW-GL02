@@ -62,7 +62,7 @@ void outcoming_thread_function(MsgQueue & to_send_queue){
 int main(){
     std::atomic<bool> is_running(true);
     MsgQueue received_queue;
-    //Receiver receiver(received_queue, is_running);
+    Receiver receiver(received_queue, is_running);
     MsgQueue to_send_queue;
     Codec codec;
     Transmitter transmitter(to_send_queue, is_running);

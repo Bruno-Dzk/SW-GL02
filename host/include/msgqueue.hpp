@@ -36,6 +36,7 @@ public:
 	// Get the "front"-element.
 	// If the queue is empty, wait till a element is avaiable.
 	Message dequeue(void);
+	bool empty(void);
 private:
 	std::queue<Message> queue;
 	mutable std::mutex mutex;

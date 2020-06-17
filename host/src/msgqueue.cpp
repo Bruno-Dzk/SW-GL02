@@ -31,3 +31,8 @@ Message MsgQueue::dequeue(void)
     queue.pop();
     return message;
 }
+
+bool MsgQueue::empty(void)
+{
+    return queue.empty();
+}

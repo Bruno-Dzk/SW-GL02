@@ -4,7 +4,7 @@ Receiver::Receiver(MsgQueue &msgQueue, std::atomic<bool> &isRunning) {
 
     this->receivedQueue = &msgQueue;
     // open port
-    this->serialPort = open("/dev/ttyACM0", O_RDONLY);
+    this->serialPort = open("/dev/ttyACM2", O_RDONLY);
     // check for errors while opening port
     this->isRunning = &isRunning;
     if (this->serialPort < 0) {
@@ -61,72 +61,100 @@ void Receiver::receive() {
         std::cout << "Error " << errno << " from tcsetattr " << strerror(errno) << std::endl;
     }
 
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1000)); //required to make flush work, for some reason
+    // tcflush(this->serialPort,TCIOFLUSH);
+
     // read data
-    int msg;
+    int bytes_read;
     unsigned char messageStart;
-    unsigned char header[4];
-    unsigned char numberOfCharacters;
-    unsigned char data[28];
+    char header[5];
+    unsigned char numberOfBytes;
+    char data[28];
+    unsigned char controlSumRead;
 
     Codec decoder;
     while(isRunning) {
-        // std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        // msg = read(this->serialPort, &byte, 1)
-        // std::cout << int
-        //look for 255 to start message
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         do {
-            msg = read(this->serialPort, &messageStart, 1);
-            if(msg < 0) {
-                std::cout << "Error while reading from port" << std::endl;
+            bytes_read = read(this->serialPort, &messageStart, 1);
+            if(bytes_read > 0){
+                // std::cout << "start: " << int(messageStart) << std::endl;
             }
-            std::cout << int(messageStart) << std::endl;
         } while(messageStart != 255);
 
         // read header
-        msg = read(this->serialPort, &header, 4);
-        if(msg < 0) {
-            std::cout << "Error while reading from port" << std::endl;
-        }
+        int read_for_header = 0;
+        do {
+            char byte;
+            bytes_read = read(this->serialPort, &byte, 1);
+            if(bytes_read == 0){
+                // std::cout << "sthwrng" << std::endl;
+            }
+            header[read_for_header] = byte;
+            read_for_header += bytes_read;
+        } while(read_for_header < 4);
+        header[5] = '\0';
+        std::string headerString(header, header + 4);
+        // std::cout << "HDR: " << header << std::endl;
 
-        int size;
-        memset(&data, '\0', sizeof(data));
-        std::string headerString(header, header + sizeof(header));
-        std::cout << headerString << std::endl;
-        if(headerString == "HSND") {
-            // header HSND means that help for buttons will be received
-            msg = read(this->serialPort, &numberOfCharacters, 1);
-            if(msg < 0) {
-                std::cout << "Error while reading from port" << std::endl;
+        if(headerString == "HSND"){
+            read(this->serialPort, &numberOfBytes, 1);
+        }else{
+            numberOfBytes = 5;
+        }       
+        // std::cout << "noc: " << (int)numberOfBytes << std::endl;
+        int read_for_data = 0;
+        do {
+            char byte;
+            bytes_read = read(this->serialPort, &byte, 1);
+            if(bytes_read > 0){
+                // std::cout << "b: " << int(byte) << std::endl;
             }
-            data[0] = numberOfCharacters;
-            msg = read(this->serialPort, &data[1], int(numberOfCharacters) + 1);
-            if(msg < 0) {
-                std::cout << "Error while reading from port" << std::endl;
-            }
+            data[read_for_data] = byte;
+            read_for_data += bytes_read;
+        } while(read_for_data < numberOfBytes);
+        data[numberOfBytes] = '\0';
+        read(this->serialPort, &controlSumRead, 1);
+        // std::cout << "cs: " << int(controlSumRead) << std::endl;
+        
+        // int size;
+        // memset(&data, '\0', sizeof(data));
+        // std::string headerString(header, header + sizeof(header));
+        // //std::cout << headerString << std::endl;
+        // if(headerString == "HSND") {
+        //     // header HSND means that help for buttons will be received
+        //     msg = read(this->serialPort, &numberOfBytes, 1);
+        //     if(msg < 0) {
+        //         std::cout << "Error while reading from port" << std::endl;
+        //     }
+        //     data[0] = numberOfBytes;
+        //     msg = read(this->serialPort, &data[1], int(numberOfBytes) + 1);
+        //     if(msg < 0) {
+        //         std::cout << "Error while reading from port" << std::endl;
+        //     }
 
-            // something went wrong, start over
-            if(msg != numberOfCharacters + 1) {
-                continue;
-            }
-            size = msg;
+        //     // something went wrong, start over
+        //     if(msg != numberOfBytes + 1) {
+        //         continue;
+        //     }
+        //     size = msg;
 
-        } else {
-            // any other header means that 6 more bytes will be received
-            msg = read(this->serialPort, &data, 6);
-            if(msg < 0) {
-                std::cout << "Error while reading from port" << std::endl;
-            }
+        // } else {
+        //     // any other header means that 6 more bytes will be received
+        //     msg = read(this->serialPort, &data, 6);
+        //     if(msg < 0) {
+        //         std::cout << "Error while reading from port" << std::endl;
+        //     }
 
-            // something went wrong, start over
-            if(msg != 6) {
-                continue;
-            }
-            size = msg - 1;
-        }
+        //     // something went wrong, start over
+        //     if(msg != 6) {
+        //         continue;
+        //     }
+        //     size = msg - 1;
+        // }
 
         // check if control sum is correct
         unsigned char controlSum = 0;
-        unsigned char controlSumRead = data[size];
         unsigned char n;
         // count set bits in header
         for(unsigned char i : header) {
@@ -138,18 +166,25 @@ void Receiver::receive() {
         }
 
         // count set bits in data
-        for(int i = 0; i < size; i++) {
+        for(int i = 0; i < numberOfBytes; i++) {
             n = data[i];
             while(n) {
                 controlSum += n & 1;
                 n >>= 1;
             }
         }
+        //std::cout << "TCS: " << int(controlSum) << std::endl;
+
+        // std::cout << "dupa: " << int(messageStart) << std::endl;
 
         // if control sum is correct decode message and push to queue
         if(controlSum == controlSumRead) {
             std::string stringData(reinterpret_cast<char *>(data));
             std::string messageString = char(messageStart) + headerString + stringData;
+            // for(char c : messageString){
+            //     std::cout << int(c) << " ";
+            // }
+            // std::cout << std::endl;
             Message message = decoder.Decode(messageString);
             receivedQueue->enqueue(message);
         }

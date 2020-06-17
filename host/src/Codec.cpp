@@ -66,7 +66,7 @@ std::string Codec::Encode(Message message)
 		}
 	}
 
-	return char(255) + headers[message.header] + data + char(Checksum(headers[message.header] + data));
+	return char(254) + headers[message.header] + data + char(Checksum(headers[message.header] + data));
 }
 
 Message Codec::Decode(std::string frame) 

@@ -35,73 +35,58 @@ static const unsigned long masks[] = {
 	0b11110000000000000000000000000000
 };
 
-byte checksum(byte *, size_t);
-byte * codec_encode(Message &, size_t&);
-Message codec_decode(byte *, size_t, byte *, size_t);
+int checksum(String);
+String codec_decode(Message);
+Message codec_decode(String);
 /////////////////////////////////////////////////////////////////////////////////
 
-byte * codec_encode(Message & message, size_t & encoded_size)
+String codec_encode(Message message)
 {
 	/*
 		The function accepts message type data and encodes in a string
 		Adds a start byte and checksum to the frame
 	*/
-  byte * data;
-  size_t datasize;
+
+  String data;
 
 	if (headers[message.header] == "HSND") {
-    datasize = 1 + message.text.length();
-    data[0] = message.text.length();
-    for(int i = 1; i < datasize; i++){
-       data[i] = message.text[i];
-    }
+		data = char(message.text.length()) + message.text;
 	}
 	else {
-		byte * bytes = new byte[5];
+		unsigned char bytes[5];
 		//conversion of uint to char array
-		bytes[0] = message.numeric & masks[0];
+		/*bytes[0] = message.numeric & masks[0];
 		bytes[1] = (message.numeric & masks[1]) >> 7;
 		bytes[2] = (message.numeric & masks[2]) >> 14;
 		bytes[3] = (message.numeric & masks[3]) >> 21;
-		bytes[4] = (message.numeric & masks[4]) >> 28;
+		bytes[4] = (message.numeric & masks[4]) >> 28;*/
+    bytes[0] = message.numeric;
+    bytes[1] = message.numeric >> 7;
+    bytes[2] = message.numeric >> 14;
+    bytes[3] = message.numeric >> 21;
+    bytes[4] = message.numeric >> 28;
 
-    data = bytes;
-    delete [] bytes;
-    datasize = 5;
+    for(int i = 0; i < 5; i++){
+      if(bytes[i] == 0){
+        bytes[i] = 254;
+      }
+    }
 	}
-
-  byte * header = new byte[4];
-  for(int i = 0; i < 4; i++){
-    header[i] = byte(headers[message.header][i]);
-  }
-
-  encoded_size = 1 + 4 + datasize + 1;
-  byte * encoded = new byte[encoded_size];
-  encoded[0] = 255;
-  memcpy(encoded + 1, header, 4);
-  memcpy(encoded + 5, data, datasize);
-  byte * to_checksum = new byte[datasize + 4];
-  memcpy(to_checksum, header, 4);
-  memcpy(to_checksum + 4, data, datasize);
-  delete [] header;
-  /*delete [] data;*/
-  encoded[encoded_size - 1] = checksum(to_checksum, datasize + 4);
-  delete to_checksum;
-
-	return encoded;
+ 
+  String test = String(char(255) + headers[message.header] + data + char(checksum(headers[message.header] + data)));
+  
+	return test;
 }
 
-Message codec_decode(byte * header, byte * data, size_t datasize) 
+Message codec_decode(String frame) 
 {
 	/*
 		The function accepts data as a string and decodes into the Message type
 	*/
-	if (memcmp(header,"HRDY",4) == 0) {
-		//return Message(HSND, frame.substring(6, int(data[5])));
-    return Message(HSND, "EE MAKARENA");
+	if (frame.substring(1, 4) == "HSND") {
+		return Message(HSND, frame.substring(6, int(frame[5])));
 	}
-  return Message(HSND, "zle");
-	/*else {
+	else {
 		int i = 0;
 		unsigned long data = 0;
 
@@ -116,14 +101,14 @@ Message codec_decode(byte * header, byte * data, size_t datasize)
 		data |= (frame[5] & masks[0]);
 		
 		return Message((MsgType)i, data);
-	}*/
+	}
 }
 
-byte checksum(byte * data, size_t datasize)
+int checksum(String data)
 {
 	//Counting the checksum from a string of data
 	int sum = 0;
-	for (int i = 0; i < datasize; i++) {
+	for (int i = 0; i < data.length(); i++) {
 		BYTE_TO_BINARY(data[i]);
 	}
 

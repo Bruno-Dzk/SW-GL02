@@ -1,6 +1,7 @@
 #pragma once
 #include <alsa/asoundlib.h>
 #include <alsa/mixer.h>
+#include <iostream>
 
 class AudioController
 {

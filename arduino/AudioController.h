@@ -9,7 +9,7 @@ public:
     AudioController() {}
     AudioController(int, int[NUMBER_OF_OUTPUTS]);
 
-    void initInput(int pin) { this->inputPin = inputPin; } // potentiometer
+    void initInput(int pin) { inputPin = inputPin; } // potentiometer
     void initOutputs(int[NUMBER_OF_OUTPUTS]); // diodes
     
     int getInputVal() { return analogRead(inputPin); }

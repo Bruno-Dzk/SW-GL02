@@ -12,71 +12,67 @@
 #define configUSE_TIME_SLICING 1
 #define configUSE_PREEMPTION 0
 
-AudioController audio_controller;
+//AudioController audio_controller;
 
-SemaphoreHandle_t xSerialSemaphore;
 int potPin = 2;    // select the input pin for the potentiometer
 int ledPin = 12;   // select the pin for the LED
 int t1 = 0;
 int aset_acc = 0;
-//bool host_ready = false;
+bool host_ready = false;
 
-//QueueHandle_t to_send_q;
+QueueHandle_t to_send_q;
+SemaphoreHandle_t binarysem;
+TaskHandle_t rcvHandle = NULL;
+TaskHandle_t sndHandle = NULL;
 
-int read_byte(byte & buf){
-  //if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+/*int read_byte(byte & buf){
     if (Serial.available() > 0){
         byte incoming = Serial.read();
         buf = incoming;
-        //xSemaphoreGive( xSerialSemaphore ); // Now free or "Give" the Serial Port for others.
-        return 1;
     }else{
-      //vTaskDelay(1);
-      //xSemaphoreGive( xSerialSemaphore ); // Now free or "Give" the Serial Port for others.
-      buf = 'e';
       return 0;
     }
-  //}
-}
+}*/
 
-void debug(byte b){
-  if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
+/*void debug(byte b){
     Serial.write(b);
-    xSemaphoreGive( xSerialSemaphore );
-  }
-}
+}*/
 
 void rcvTaskFunction(void * pvParameters)
 {
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
-    //Serial.println("siemka");
     for( ;; )
     {
-        int bytes_read; 
-        byte messageStart;
+        byte start = 0;
         do {
-          bytes_read = read_byte(messageStart);
-          //Serial.println(int(bytes_read));
-          if(bytes_read > 0){
-            debug(messageStart);
+          if(Serial.available() > 0){
+            start = Serial.read();
           }
-        } while(bytes_read != 1 && messageStart != 254);
-    
-        // read header
-        int read_for_header = 0;
+        } while(start != 254);
+        //Serial.write(start);
+
         byte header [4];
+        int read_for_header = 0;
         do {
-           byte rb;
-           bytes_read = read_byte(rb);
-           header[read_for_header] = rb;
-           read_for_header += bytes_read;
+           if(Serial.available() > 0){
+            header[read_for_header] = Serial.read();
+            read_for_header++;
+          }
         } while(read_for_header < 4);
+
+        /*for(int i = 0; i < 4; i++){
+          Serial.write(header[i]);
+        }*/
     
         byte no_of_bytes;
+        int read_for_no = 0;
         if(false){
             do {
-              int bytes_read = read_byte(no_of_bytes);
-            } while(bytes_read != 1);
+              if(Serial.available() > 0){
+                no_of_bytes = Serial.read();
+                read_for_no++;
+              }
+            } while(read_for_no != 1);
         }else{
             no_of_bytes = 5;
         }     
@@ -85,131 +81,96 @@ void rcvTaskFunction(void * pvParameters)
         byte * data = new byte[no_of_bytes];
         int read_for_data = 0;
         do {
-           byte rb;
-           bytes_read = read_byte(rb);
-           data[read_for_data] = rb;
-           read_for_data += bytes_read;
-           if(bytes_read > 0){
-              //debug(rb);
-           }
+           if(Serial.available() > 0){
+              data[read_for_data] = Serial.read();
+              read_for_data++;
+          }
         } while(read_for_data < no_of_bytes);
 
-        //debug(header[0]);
-        /*for(int i = 0; i < 4; i++){
-          debug(header[i]);
+        /*for(int i = 0; i < no_of_bytes; i++){
+          Serial.write(data[i]);
         }*/
         
         byte control_sum;
+        int read_for_sum = 0;
         do {
-            bytes_read = read_byte(control_sum);
-        } while(bytes_read != 1);
+          if(Serial.available() > 0){
+            control_sum = Serial.read();
+            read_for_sum++;
+          }
+        } while(read_for_sum != 1);
+        //Serial.write(control_sum);
         
         Message test = codec_decode(header, data, no_of_bytes);
 
-         if(test.header == HRDY && true){ //!host_ready){
-            Message erdy(ERDY, 420);
-            //xQueueSend( to_send_q,( void * ) &erdy,( TickType_t ) 10 );
-        //if(memcmp(header,"HRDY",4) == 0 && !host_ready){
-          //digitalWrite(LED_BUILTIN, LOW);
-          //host_ready = true;
+         xSemaphoreTake(binarysem,( TickType_t )10 );
+         if(test.header == HRDY && !host_ready){ //!host_ready){
+            host_ready = true;
+            digitalWrite(LED_BUILTIN, HIGH);
+            Message erdy(ERDY, 420);  
+            xQueueSend( to_send_q,( void * ) &erdy,( TickType_t ) 10 );
+            xSemaphoreGive(binarysem);
         }
         
         delete [] data;
+        vTaskDelay(10);  // one tick delay (15ms) in between reads for stability
        }
-    //vTaskDelete( NULL );
+    vTaskDelete( NULL );
+}
+
+void send_message(Message & mes){
+  size_t datasize;
+  byte * encoded= codec_encode(mes, datasize);
+  for(int i = 0; i < datasize; i++){
+        Serial.write(encoded[i]);
+  }
+  delete [] encoded;
+  vTaskDelay( 1 );
 }
 
 void sndTaskFunction(void * pvParameters)
 {
-  //Serial.write(244);
   configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
-  if(true){
-    send_message();
+  //vTaskSuspend( NULL );
+  for(;;){
+    //Serial.write(1);
+    //if( xSemaphoreTake( binarysem, ( TickType_t ) 10 ) == pdTRUE )
+    xSemaphoreTake(binarysem,( TickType_t )10 );
+    if(host_ready)
+    {
+        Message to_send;
+        if(xQueueReceive(to_send_q,&to_send,(TickType_t) 10)){
+          send_message(to_send);
+          vTaskDelay( 2 );
+        }
+        /*unsigned long val = analogRead(2);
+        Message audiomsg(ASET, val);
+        send_message(audiomsg); 
+        vTaskDelay( 2 );*/
+        xSemaphoreGive(binarysem);
+    }
   }
-  vTaskDelay(1);
 }
-
-//#define STACK_SIZE 200
-//StaticTask_t xTaskBuffer;
-//StackType_t xStack[ STACK_SIZE ];
-
-// Declare a mutex Semaphore Handle which we will use to manage the Serial Port.
-// It will be used to ensure only only one Task is accessing this resource at any time.
 
 void setup()
 {
-    // inicjalizacja wejść
-    //sc.initInput(2); // ustawienie pinu dla potencjometru
-
-
-    // inicjalizacja wyjść
-    //int outputs[] = {4, 5, 6, 7};
-    //sc.initOutputs(outputs); // piny dla diód
-    //audio_controller =AudioController(2,outputs);
-    pinMode(ledPin, OUTPUT);
     Serial.begin(9600);
-    while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB, on LEONARDO, MICRO, YUN, and other 32u4 based boards.
-    }   
-
-    if ( xSerialSemaphore == NULL )  // Check to confirm that the Serial Semaphore has not already been created.
+    pinMode(LED_BUILTIN, OUTPUT);
+    binarysem = xSemaphoreCreateBinary();
+    xSemaphoreGive(binarysem);
+    //xSemaphoreTake(binarysem,( TickType_t )10 );
+    /*if( binarysem == NULL )
     {
-      xSerialSemaphore = xSemaphoreCreateMutex();  // Create a mutex semaphore we will use to manage the Serial Port
-      if ( ( xSerialSemaphore ) != NULL )
-        xSemaphoreGive( ( xSerialSemaphore ) );  // Make the Serial Port available for use, by "Giving" the Semaphore.
-    }
-    //Create a queue of messages
-    //to_send_q = xQueueCreate( 10, sizeof( Message ) );
+       //Serial.write(202);
+       //digitalWrite(LED_BUILTIN, HIGH); 
+    }*/
+    to_send_q = xQueueCreate( 10, sizeof( struct Message * ) );
     
-    //BaseType_t xReturned;
-    TaskHandle_t rcvHandle = NULL;
-    TaskHandle_t sndHandle = NULL;
-    //TaskHandle_t xHandle = NULL;
-
-    /* Create the task without using any dynamic memory allocation. */
     xTaskCreate(rcvTaskFunction,"rcv_task", 256, ( void * ) 1, 1, &rcvHandle);
     xTaskCreate(sndTaskFunction,"snd_task", 256, ( void * ) 1, 1, &sndHandle);
-
-    /*if( ( to_send_q == NULL ))
-     {
-     }*/
 }
 
 void loop()
 {
-
-}
-
-void send_message(){
-  unsigned long val = analogRead(2);
-  Message mes(ASET,val);
-  size_t datasize;
-  byte * encoded= codec_encode(mes, datasize);
-  for(int i = 0; i < datasize; i++){
-      //if ( xSemaphoreTake( xSerialSemaphore, ( TickType_t ) 5 ) == pdTRUE ){
-        Serial.write(encoded[i]);
-        //xSemaphoreGive( xSerialSemaphore ); // Now free or "Give" the Serial Port for others.
-      //}
-  }
-  /*Serial.print(' ');
-  for(int i = 0; i < datasize; i++){
-    Serial.print(int(encoded[i]));
-    Serial.print(' ');
-  }
-  Serial.print('\n');*/
-  delete [] encoded;
-}
-
-void comment()
-{
-  //Serial.println("com");
-  int t2 = millis();
-    int delta = t2 - t1;
-               // stop the program for some time*/  
-    t1 = t2;
-    delay(50);
-  /////////////////////
-    
-  
-    delay(20);
+  //
 }

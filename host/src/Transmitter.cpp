@@ -1,6 +1,6 @@
 #include "Transmitter.hpp"
 
-Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_running, std::atomic<bool>& arduino_running)
+Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_running)
 {
 	this->toSendQueue = &msgQueue;
 
@@ -14,7 +14,6 @@ Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_runni
 	// the only condition, is that these changes SHOULD BE PROVIDED in 
 	// the main function
 	this->program_status = &program_is_running;
-	this->arduino_running = &arduino_running;
 }
 
 	void Transmitter::send()

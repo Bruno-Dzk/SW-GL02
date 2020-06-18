@@ -9,7 +9,7 @@
 #include <atomic>
 #include <chrono>
 
-void outcoming_thread_function(MsgQueue & to_send_queue){
+void outcoming_thread_function(MsgQueue & to_send_queue, std::atomic<bool>& arduino_running){
     PerformanceMonitor performance_monitor;
     auto t1 = std::chrono::high_resolution_clock::now(); 
     double perfmon_acc = 0.0;
@@ -19,12 +19,14 @@ void outcoming_thread_function(MsgQueue & to_send_queue){
         auto t2 = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> delta = t2 - t1;
         VideoColorMonitor video_cm;
-        // if(audio_acc > 30){
-        //     AudioController audio_controller;
-        //     Message audio_info(ASND, audio_controller.getLevel());
-        //     to_send_queue.enqueue(audio_info);
-        //     audio_acc = 0.0;
-        // }
+        if(arduino_running.load()){
+            if(audio_acc > 100){
+                AudioController audio_controller;
+                Message audio_info(ASND, audio_controller.getLevel());
+                to_send_queue.enqueue(audio_info);
+                audio_acc = 0.0;
+            }
+        }
 
         // if(vcolor_acc > 20){
         //     unsigned int color = video_cm.getColor();
@@ -58,25 +60,27 @@ void outcoming_thread_function(MsgQueue & to_send_queue){
 
 int main(){
     std::atomic<bool> is_running(true);
-    std::atomic<bool> arduino_running(true);
+    std::atomic<bool> arduino_running(false);
     MsgQueue received_queue;
     Receiver receiver(received_queue, is_running);
     MsgQueue to_send_queue;
     Codec codec;
-    Transmitter transmitter(to_send_queue, is_running, arduino_running);
+    Transmitter transmitter(to_send_queue, is_running);
     AudioController audio_controller;
-    std::thread outcoming_thread(outcoming_thread_function, std::ref(to_send_queue));
+    std::thread outcoming_thread(outcoming_thread_function, std::ref(to_send_queue), std::ref(arduino_running));
     for (;;) {
         Message received = received_queue.dequeue();
         switch(received.header){
             // case ASND:
             //     std::cout << received.numeric << std::endl;
             //     break;
-            case HSND:
-                std::cout << received.text << std::endl;
+            case ERDY:
+                if(!arduino_running.load()){
+                    arduino_running.store(true);
+                }
                 break;
             case ASET:
-                std::cout << "a RCV: " << received.numeric << std::endl;
+                //std::cout << "a RCV: " << received.numeric << std::endl;
                 audio_controller.setLevel(received.numeric);
                 break;
             case VSND:

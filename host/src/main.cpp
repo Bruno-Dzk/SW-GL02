@@ -48,13 +48,10 @@ void outcoming_thread_function(MsgQueue & to_send_queue){
         Message test = Message(HRDY, 69);
         to_send_queue.enqueue(test);
 
-        Message test2 = Message(HSND, "EEEEEEE");
-        to_send_queue.enqueue(test2);
-
         perfmon_acc += delta.count();
         audio_acc += delta.count();
         vcolor_acc += delta.count();
-        std::this_thread::sleep_for(std::chrono::milliseconds(20000));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         t1 = t2;
 	}
 }

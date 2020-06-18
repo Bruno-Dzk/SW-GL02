@@ -120,7 +120,7 @@ Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_runni
 				// 	std::cout << "Error string :" << strerror(errno) << std::endl;
 				// }
 				// make a thread sleep for a while
-				std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+				std::this_thread::sleep_for(std::chrono::milliseconds(50));
 			}
 		}
 

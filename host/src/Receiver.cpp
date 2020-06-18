@@ -75,6 +75,10 @@ void Receiver::receive() {
     Codec decoder;
     while(isRunning) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        bytes_read = read(this->serialPort, &messageStart, 1);
+        // if(bytes_read > 0){
+        //     std::cout << "b: " << int(messageStart) << std::endl;
+        // }
         do {
             bytes_read = read(this->serialPort, &messageStart, 1);
             if(bytes_read > 0){

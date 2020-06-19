@@ -10,9 +10,7 @@
 
 #define SERIAL_RX_BUFFER_SIZE 256
 #define configUSE_TIME_SLICING 1
-#define configUSE_PREEMPTION 0
-
-//AudioController audio_controller;
+#define configUSE_PREEMPTION 1
 
 int potPin = 2;    // select the input pin for the potentiometer
 int ledPin = 12;   // select the pin for the LED
@@ -40,6 +38,8 @@ TaskHandle_t sndHandle = NULL;
 
 void rcvTaskFunction(void * pvParameters)
 {
+    int ac_output [] = {4,6,8,10};
+    AudioController audio_controller(2, ac_output);
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
     for( ;; )
     {
@@ -49,7 +49,6 @@ void rcvTaskFunction(void * pvParameters)
             start = Serial.read();
           }
         } while(start != 254);
-        //Serial.write(start);
 
         byte header [4];
         int read_for_header = 0;
@@ -99,21 +98,34 @@ void rcvTaskFunction(void * pvParameters)
             read_for_sum++;
           }
         } while(read_for_sum != 1);
-        //Serial.write(control_sum);
+        //Serial.write(control_sum);\
         
         Message test = codec_decode(header, data, no_of_bytes);
 
-         xSemaphoreTake(binarysem,( TickType_t )10 );
+        if(test.header == ASND){
+          digitalWrite(LED_BUILTIN, HIGH);
+          audio_controller.setOutputs(test.numeric);
+        }
+
+         xSemaphoreTake(binarysem,( TickType_t )0 );
          if(test.header == HRDY && !host_ready){ //!host_ready){
             host_ready = true;
-            digitalWrite(LED_BUILTIN, HIGH);
-            Message erdy(ERDY, 420);  
-            xQueueSend( to_send_q,( void * ) &erdy,( TickType_t ) 10 );
+            //digitalWrite(LED_BUILTIN, HIGH);
+            Message erdy;
+            erdy.header = ERDY;
+            erdy.numeric = 420;
+            while(true){
+              if(xQueueSend( to_send_q,( void * ) &erdy,( TickType_t ) 1 ) != pdTRUE){
+                break;
+              }
+              vTaskDelay( 1 );
+            }
             xSemaphoreGive(binarysem);
-        }
+         }
         
         delete [] data;
-        vTaskDelay(10);  // one tick delay (15ms) in between reads for stability
+        vTaskDelay( 1 );
+        //vTaskDelay(3);  // one tick delay (15ms) in between reads for stability
        }
     vTaskDelete( NULL );
 }
@@ -135,18 +147,23 @@ void sndTaskFunction(void * pvParameters)
   for(;;){
     //Serial.write(1);
     //if( xSemaphoreTake( binarysem, ( TickType_t ) 10 ) == pdTRUE )
-    xSemaphoreTake(binarysem,( TickType_t )10 );
+    xSemaphoreTake(binarysem,( TickType_t )0 );
     if(host_ready)
     {
         Message to_send;
-        if(xQueueReceive(to_send_q,&to_send,(TickType_t) 10)){
+        if(xQueueReceive(to_send_q,&to_send,(TickType_t) 1)== pdPASS){
+          /*Message test;
+          test.header = ERDY;
+          test.numeric = 420;*/
           send_message(to_send);
-          vTaskDelay( 2 );
+          vTaskDelay( 1 );
         }
-        /*unsigned long val = analogRead(2);
-        Message audiomsg(ASET, val);
+        unsigned long val = analogRead(2);
+        Message audiomsg;
+        audiomsg.header = ASET;
+        audiomsg.numeric = val;
         send_message(audiomsg); 
-        vTaskDelay( 2 );*/
+        vTaskDelay( 2 );
         xSemaphoreGive(binarysem);
     }
   }
@@ -164,9 +181,9 @@ void setup()
        //Serial.write(202);
        //digitalWrite(LED_BUILTIN, HIGH); 
     }*/
-    to_send_q = xQueueCreate( 10, sizeof( struct Message * ) );
+    to_send_q = xQueueCreate( 10, sizeof( struct Message ) );
     
-    xTaskCreate(rcvTaskFunction,"rcv_task", 256, ( void * ) 1, 1, &rcvHandle);
+    xTaskCreate(rcvTaskFunction,"rcv_task", 400, ( void * ) 1, 1, &rcvHandle);
     xTaskCreate(sndTaskFunction,"snd_task", 256, ( void * ) 1, 1, &sndHandle);
 }
 

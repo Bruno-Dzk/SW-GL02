@@ -12,7 +12,7 @@
   (byte & 0x01 ? sum += 1 : sum) 
 
 //Array of the headers as string 
-static const String headers[] = {
+static const unsigned char headers[][5] = {
 	"HRDY",
 	"ERDY",
 	"ASET",
@@ -49,13 +49,14 @@ byte * codec_encode(Message & message, size_t & encoded_size)
   byte * data;
   size_t datasize;
 
-	if (headers[message.header] == "HSND") {
-    datasize = 1 + message.text.length();
+	if (memcmp(headers[message.header],"HSND",4) == 0) {
+    /*datasize = 1 + message.text.length();
     data = new byte [datasize];
     data[0] = message.text.length();
     for(int i = 1; i < datasize; i++){
        data[i] = message.text[i];
-    }
+    }*/
+    data = (byte)message.text;
 	}
 	else {
     datasize = 5;
@@ -95,27 +96,29 @@ Message codec_decode(byte * header, byte * data, size_t datasize)
 	/*
 		The function accepts data as a string and decodes into the Message type
 	*/
-	if (memcmp(header,"HRDY",4) == 0) {
-		//return Message(HSND, frame.substring(6, int(data[5])));
-    return Message(HRDY, 1);
+  Message decoded;
+	if (memcmp(header,"HSND",4) == 0) {
+    decoded.header = HSND;
+    decoded.text = (char*)data;
 	}
-  return Message(HSND, "zle");
-	/*else {
+	else{
 		int i = 0;
-		unsigned long data = 0;
+		unsigned long numeric = 0;
 
-		while (frame.substring(1, 4) != headers[i]) {
+		while (memcmp(header,headers[i],4) != 0) {
 			i++;
 		}
 		//conversion of char array to uint
-		data |= (frame[9] & masks[0]) << 28;
-		data |= (frame[8] & masks[0]) << 21;
-		data |= (frame[7] & masks[0]) << 14;
-		data |= (frame[6] & masks[0]) << 7;
-		data |= (frame[5] & masks[0]);
-		
-		return Message((MsgType)i, data);
-	}*/
+		numeric |= (data[4] & masks[0]) << 28;
+		numeric |= (data[3] & masks[0]) << 21;
+		numeric |= (data[2] & masks[0]) << 14;
+		numeric |= (data[1] & masks[0]) << 7;
+		numeric |= (data[0] & masks[0]);
+
+    decoded.header = (MsgType)i;
+    decoded.numeric = numeric;
+	}
+  return decoded;
 }
 
 byte checksum(byte * data, size_t datasize)

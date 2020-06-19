@@ -4,7 +4,7 @@ Receiver::Receiver(MsgQueue &msgQueue, std::atomic<bool> &isRunning) {
 
     this->receivedQueue = &msgQueue;
     // open port
-    this->serialPort = open("/dev/ttyACM0", O_RDONLY);
+    this->serialPort = open("/dev/ttyACM1", O_RDONLY);
     // check for errors while opening port
     this->isRunning = &isRunning;
     if (this->serialPort < 0) {

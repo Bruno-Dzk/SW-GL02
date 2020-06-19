@@ -45,9 +45,9 @@ void AudioController::setOutputs(int volume) // volume range [0, 100]
     for (int i = volStep / 2, j = 0; i <= 100; i += volStep, j++)
     {            
         if (i >= volume)
-            digitalWrite(outputPins[j], HIGH);
-        else
             digitalWrite(outputPins[j], LOW);
+        else
+            digitalWrite(outputPins[j], HIGH);
     }
 }
 

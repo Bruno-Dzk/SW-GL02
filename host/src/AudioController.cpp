@@ -20,7 +20,7 @@ AudioController::AudioController(const char* card, const char* selemName)
 
 void AudioController::setLevel(int volume)
 {
-    long inputMax = 1024;
+    long inputMax = 650;
     
     if (volume < 0)
         volume = 0;

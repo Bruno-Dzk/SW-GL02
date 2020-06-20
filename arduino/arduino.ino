@@ -8,6 +8,7 @@
 #include "message.h"
 #include "codec.h"
 #include "rgb.h"
+#include "key_task.h"
 
 #define SERIAL_RX_BUFFER_SIZE 256
 #define configUSE_TIME_SLICING 1
@@ -20,6 +21,7 @@ QueueHandle_t lcd_q; // Kolejka do której się macie podpiąć
 SemaphoreHandle_t binarysem;
 TaskHandle_t rcvHandle = NULL;
 TaskHandle_t sndHandle = NULL;
+TaskHandle_t keyHandle = NULL;
 TaskHandle_t lcdHandle = NULL; // Wasz task
  
 void rcvTaskFunction(void * pvParameters)
@@ -156,11 +158,11 @@ void sndTaskFunction(void * pvParameters)
           send_message(to_send);
           vTaskDelay( 1 );
         }
-        unsigned long val = analogRead(2);
+        /*unsigned long val = analogRead(2);
         Message audiomsg;
         audiomsg.header = ASET;
         audiomsg.numeric = val;
-        send_message(audiomsg);
+        send_message(audiomsg);*/
         vTaskDelay( 2 );
         xSemaphoreGive(binarysem);
     }
@@ -193,6 +195,7 @@ void setup()
     
     xTaskCreate(rcvTaskFunction,"rcv_task", 400, ( void * ) 1, 1, &rcvHandle);
     xTaskCreate(sndTaskFunction,"snd_task", 256, ( void * ) 1, 1, &sndHandle);
+    xTaskCreate(keyTaskFunction,"key_task", 256, ( void * ) to_send_q, 1, &keyHandle);
 
     //////////////////////
     //Odkomentujcie, wstwcie swoją funkcję

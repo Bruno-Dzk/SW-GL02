@@ -9,6 +9,8 @@
 #include <atomic>
 #include <chrono>
 
+#define MESSAGING_ENABLED 0
+
 void outcoming_thread_function(MsgQueue & to_send_queue, std::atomic<bool>& arduino_running, AudioController & audio_controller){
     PerformanceMonitor performance_monitor;
     VideoColorMonitor video_cm;
@@ -20,29 +22,29 @@ void outcoming_thread_function(MsgQueue & to_send_queue, std::atomic<bool>& ardu
     for (;;) {
         auto t2 = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> delta = t2 - t1;
-        if(arduino_running.load()){
-            // if(audio_acc > 200.0){
-            //     Message audio_info(ASND, audio_controller.getLevel());
-            //     to_send_queue.enqueue(audio_info);
-            //     audio_acc = 0.0;
-            // }
-            if(perfmon_acc > 400.0){
-                Message cpu_info(CSND, performance_monitor.getCPUUsage());
-                to_send_queue.enqueue(cpu_info);
-                Message ram_info(RSND, performance_monitor.getRAMUsage());
-                to_send_queue.enqueue(ram_info);
-                Message temp_info(TSND, performance_monitor.getCPUTemp());
-                to_send_queue.enqueue(temp_info);
-                perfmon_acc = 0.0;
+        if(arduino_running.load() && MESSAGING_ENABLED){
+            if(audio_acc > 50.0){
+                Message audio_info(ASND, audio_controller.getLevel());
+                to_send_queue.enqueue(audio_info);
+                audio_acc = 0.0;
             }
-
-            // if(vcolor_acc > 100){
-            //     unsigned int color = video_cm.getColor();
-            //     // std::cout << color << std::endl;
-            //     Message video_info(VSND, color);
-            //     to_send_queue.enqueue(video_info);
-            //     vcolor_acc = 0.0;
+            // if(perfmon_acc > 400.0){
+            //     Message cpu_info(CSND, performance_monitor.getCPUUsage());
+            //     to_send_queue.enqueue(cpu_info);
+            //     Message ram_info(RSND, performance_monitor.getRAMUsage());
+            //     to_send_queue.enqueue(ram_info);
+            //     Message temp_info(TSND, performance_monitor.getCPUTemp());
+            //     to_send_queue.enqueue(temp_info);
+            //     perfmon_acc = 0.0;
             // }
+
+            if(vcolor_acc > 50.0){
+                unsigned int color = video_cm.getColor();
+                // std::cout << color << std::endl;
+                Message video_info(VSND, color);
+                to_send_queue.enqueue(video_info);
+                vcolor_acc = 0.0;
+            }
 
             perfmon_acc += delta.count();
             audio_acc += delta.count();
@@ -96,7 +98,7 @@ int main(){
             //     std::cout << "RGOT: " << received.numeric << std::endl;
             //     break;
             case KEYP:
-                //keyctrl
+                std::cout << "KEYP: " << received.numeric << std::endl;
                 break;
             case HGET:
                 //keyctrl

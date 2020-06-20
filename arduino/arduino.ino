@@ -7,6 +7,7 @@
 #include "AudioController.h"
 #include "message.h"
 #include "codec.h"
+#include "rgb.h"
 
 #define SERIAL_RX_BUFFER_SIZE 256
 #define configUSE_TIME_SLICING 1
@@ -83,8 +84,7 @@ void rcvTaskFunction(void * pvParameters)
             read_for_sum++;
           }
         } while(read_for_sum != 1);
-        //Serial.write(control_sum);\
-        
+        //Serial.write(control_sum);
         Message received = codec_decode(header, data, no_of_bytes);
         switch(received.header){
           case CSND:
@@ -101,15 +101,17 @@ void rcvTaskFunction(void * pvParameters)
             }
             break;
           case ASND:
-            digitalWrite(LED_BUILTIN, HIGH);
             audio_controller.setOutputs(received.numeric);
+            break;
+          case VSND:
+            show_RGB(received.numeric);
             break;
         }
 
          xSemaphoreTake(binarysem,( TickType_t )0 );
          if(received.header == HRDY && !host_ready){ //!host_ready){
             host_ready = true;
-            //digitalWrite(LED_BUILTIN, HIGH);
+            digitalWrite(LED_BUILTIN, HIGH);
             Message erdy;
             erdy.header = ERDY;
             erdy.numeric = 420;

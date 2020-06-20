@@ -21,12 +21,12 @@ void outcoming_thread_function(MsgQueue & to_send_queue, std::atomic<bool>& ardu
         auto t2 = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> delta = t2 - t1;
         if(arduino_running.load()){
-            if(audio_acc > 300.0){
-                Message audio_info(ASND, audio_controller.getLevel());
-                to_send_queue.enqueue(audio_info);
-                audio_acc = 0.0;
-            }
-            if(perfmon_acc > 300.0){
+            // if(audio_acc > 200.0){
+            //     Message audio_info(ASND, audio_controller.getLevel());
+            //     to_send_queue.enqueue(audio_info);
+            //     audio_acc = 0.0;
+            // }
+            if(perfmon_acc > 400.0){
                 Message cpu_info(CSND, performance_monitor.getCPUUsage());
                 to_send_queue.enqueue(cpu_info);
                 Message ram_info(RSND, performance_monitor.getRAMUsage());
@@ -36,13 +36,13 @@ void outcoming_thread_function(MsgQueue & to_send_queue, std::atomic<bool>& ardu
                 perfmon_acc = 0.0;
             }
 
-            if(vcolor_acc > 100){
-                unsigned int color = video_cm.getColor();
-                // std::cout << color << std::endl;
-                Message video_info(VSND, color);
-                to_send_queue.enqueue(video_info);
-                vcolor_acc = 0.0;
-            }
+            // if(vcolor_acc > 100){
+            //     unsigned int color = video_cm.getColor();
+            //     // std::cout << color << std::endl;
+            //     Message video_info(VSND, color);
+            //     to_send_queue.enqueue(video_info);
+            //     vcolor_acc = 0.0;
+            // }
 
             perfmon_acc += delta.count();
             audio_acc += delta.count();
@@ -86,15 +86,15 @@ int main(){
                 std::cout << "a RCV: " << received.numeric << std::endl;
                 audio_controller.setLevel(received.numeric);
                 break;
-            case TSND:
-                std::cout << "TGOT: " << received.numeric << std::endl;
-                break;
-            case CSND:
-                std::cout << "CGOT: " << received.numeric << std::endl;
-                break;
-            case RSND:
-                std::cout << "RGOT: " << received.numeric << std::endl;
-                break;
+            // case TSND:
+            //     std::cout << "TGOT: " << received.numeric << std::endl;
+            //     break;
+            // case CSND:
+            //     std::cout << "CGOT: " << received.numeric << std::endl;
+            //     break;
+            // case RSND:
+            //     std::cout << "RGOT: " << received.numeric << std::endl;
+            //     break;
             case KEYP:
                 //keyctrl
                 break;

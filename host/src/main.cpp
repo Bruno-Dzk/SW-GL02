@@ -35,18 +35,19 @@ void outcoming_thread_function(MsgQueue & to_send_queue, std::atomic<bool>& ardu
                 to_send_queue.enqueue(temp_info);
                 perfmon_acc = 0.0;
             }
+
+            if(vcolor_acc > 100){
+                unsigned int color = video_cm.getColor();
+                // std::cout << color << std::endl;
+                Message video_info(VSND, color);
+                to_send_queue.enqueue(video_info);
+                vcolor_acc = 0.0;
+            }
+
             perfmon_acc += delta.count();
             audio_acc += delta.count();
             vcolor_acc += delta.count();
         }
-
-        // if(vcolor_acc > 20){
-        //     unsigned int color = video_cm.getColor();
-        //     // std::cout << color << std::endl;
-        //     Message video_info(VSND, color);
-        //     to_send_queue.enqueue(video_info);
-        //     vcolor_acc = 0.0;
-        // }
        
         if(handshake_acc > 3000.0){
             Message test = Message(HRDY, 69);

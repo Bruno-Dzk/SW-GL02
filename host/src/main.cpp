@@ -21,11 +21,11 @@ void outcoming_thread_function(MsgQueue & to_send_queue, std::atomic<bool>& ardu
         auto t2 = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> delta = t2 - t1;
         if(arduino_running.load()){
-            /*if(audio_acc > 300.0){
+            if(audio_acc > 300.0){
                 Message audio_info(ASND, audio_controller.getLevel());
                 to_send_queue.enqueue(audio_info);
                 audio_acc = 0.0;
-            }*/
+            }
             if(perfmon_acc > 300.0){
                 Message cpu_info(CSND, performance_monitor.getCPUUsage());
                 to_send_queue.enqueue(cpu_info);

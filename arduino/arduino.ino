@@ -23,7 +23,7 @@ TaskHandle_t lcdHandle = NULL; // Wasz task
  
 void rcvTaskFunction(void * pvParameters)
 {
-    int ac_output [] = {4,6,8,10};
+    int ac_output [] = {2,3,4,5,6,7,8,9};
     AudioController audio_controller(2, ac_output);
     configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
     for( ;; )
@@ -154,11 +154,11 @@ void sndTaskFunction(void * pvParameters)
           send_message(to_send);
           vTaskDelay( 1 );
         }
-        /*unsigned long val = analogRead(2);
+        unsigned long val = analogRead(2);
         Message audiomsg;
         audiomsg.header = ASET;
         audiomsg.numeric = val;
-        send_message(audiomsg); */
+        send_message(audiomsg);
         vTaskDelay( 2 );
         xSemaphoreGive(binarysem);
     }

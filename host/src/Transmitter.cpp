@@ -27,7 +27,7 @@ Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_runni
 		int bits_written = 0;
 
 		// open serial port in write_only mode 
-		this->serial_port_fd = open("/dev/ttyACM1", O_WRONLY);
+		this->serial_port_fd = open("/dev/ttyACM0", O_WRONLY);
 
 		// if any error occured while opening the port - print a message and exit the program
 		if (this->serial_port_fd < 0)

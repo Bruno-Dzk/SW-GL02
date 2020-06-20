@@ -12,30 +12,15 @@
 #define configUSE_TIME_SLICING 1
 #define configUSE_PREEMPTION 1
 
-int potPin = 2;    // select the input pin for the potentiometer
-int ledPin = 12;   // select the pin for the LED
-int t1 = 0;
-int aset_acc = 0;
 bool host_ready = false;
 
 QueueHandle_t to_send_q;
+QueueHandle_t lcd_q; // Kolejka do której się macie podpiąć
 SemaphoreHandle_t binarysem;
 TaskHandle_t rcvHandle = NULL;
 TaskHandle_t sndHandle = NULL;
-
-/*int read_byte(byte & buf){
-    if (Serial.available() > 0){
-        byte incoming = Serial.read();
-        buf = incoming;
-    }else{
-      return 0;
-    }
-}*/
-
-/*void debug(byte b){
-    Serial.write(b);
-}*/
-
+TaskHandle_t lcdHandle = NULL; // Wasz task
+ 
 void rcvTaskFunction(void * pvParameters)
 {
     int ac_output [] = {4,6,8,10};
@@ -100,15 +85,29 @@ void rcvTaskFunction(void * pvParameters)
         } while(read_for_sum != 1);
         //Serial.write(control_sum);\
         
-        Message test = codec_decode(header, data, no_of_bytes);
-
-        if(test.header == ASND){
-          digitalWrite(LED_BUILTIN, HIGH);
-          audio_controller.setOutputs(test.numeric);
+        Message received = codec_decode(header, data, no_of_bytes);
+        switch(received.header){
+          case CSND:
+          case TSND:
+          case RSND:
+            while(true){
+                int result = xQueueSend( lcd_q,( void * ) &received,( TickType_t ) 1 );
+                if( result == pdTRUE){
+                  break;
+                }else if( result == errQUEUE_FULL ){
+                  xQueueReceive(lcd_q,NULL,(TickType_t) 1);
+                }
+                vTaskDelay( 1 );
+            }
+            break;
+          case ASND:
+            digitalWrite(LED_BUILTIN, HIGH);
+            audio_controller.setOutputs(received.numeric);
+            break;
         }
 
          xSemaphoreTake(binarysem,( TickType_t )0 );
-         if(test.header == HRDY && !host_ready){ //!host_ready){
+         if(received.header == HRDY && !host_ready){ //!host_ready){
             host_ready = true;
             //digitalWrite(LED_BUILTIN, HIGH);
             Message erdy;
@@ -152,22 +151,26 @@ void sndTaskFunction(void * pvParameters)
     {
         Message to_send;
         if(xQueueReceive(to_send_q,&to_send,(TickType_t) 1)== pdPASS){
-          /*Message test;
-          test.header = ERDY;
-          test.numeric = 420;*/
           send_message(to_send);
           vTaskDelay( 1 );
         }
-        unsigned long val = analogRead(2);
+        /*unsigned long val = analogRead(2);
         Message audiomsg;
         audiomsg.header = ASET;
         audiomsg.numeric = val;
-        send_message(audiomsg); 
+        send_message(audiomsg); */
         vTaskDelay( 2 );
         xSemaphoreGive(binarysem);
     }
   }
 }
+
+/*void {wasza funkcja}(void * pvParameters){
+  configASSERT( ( ( uint32_t ) pvParameters ) == 1 );
+  for(;;){
+    Serial.println("eee");
+  }
+}*/
 
 void setup()
 {
@@ -182,9 +185,20 @@ void setup()
        //digitalWrite(LED_BUILTIN, HIGH); 
     }*/
     to_send_q = xQueueCreate( 10, sizeof( struct Message ) );
+    //////////////////////
+    //Do tej kolejki się podpinacie elegancko
+    lcd_q = xQueueCreate( 10, sizeof( struct Message ) );
     
     xTaskCreate(rcvTaskFunction,"rcv_task", 400, ( void * ) 1, 1, &rcvHandle);
     xTaskCreate(sndTaskFunction,"snd_task", 256, ( void * ) 1, 1, &sndHandle);
+
+    //////////////////////
+    //Odkomentujcie, wstwcie swoją funkcję
+    //Gdyby arduino się zacinało i zaczynało mrygać diodą L powoli = stack overflow -> tam gdzie jest 256 zwiększcie rozmair stosu dla taska ale nie powinno się tak dziać
+    //Gdyby mrygało diodą L szybko to jest heap overflow i się upewnijcie że kasujecie wszystko co dynamicznie alokowane
+    //Zmieniłem w Message string na stary dobry char * bo stringi na arduino są fe
+    //xTaskCreate({wasza funkcja},"lcd_task", 256, ( void * ) 1, 1, &lcdHandle);
+    /////////////////////
 }
 
 void loop()

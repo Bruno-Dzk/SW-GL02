@@ -92,6 +92,7 @@ void rcvTaskFunction(void * pvParameters)
           case CSND:
           case TSND:
           case RSND:
+          case HSND:
             while(true){
                 int result = xQueueSend( lcd_q,( void * ) &received,( TickType_t ) 1 );
                 if( result == pdTRUE){

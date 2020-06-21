@@ -91,6 +91,7 @@ int main(){
                 key_controller.keyPress(received.numeric);
                 break;
             case HGET:
+                std::cout << "HGET: " << received.numeric << std::endl;
                 Message help_message(HSND, key_controller.getHelp(received.numeric));
                 to_send_queue.enqueue(help_message);
                 break;

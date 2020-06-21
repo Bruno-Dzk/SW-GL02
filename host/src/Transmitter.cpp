@@ -101,7 +101,7 @@ Transmitter::Transmitter(MsgQueue &msgQueue, std::atomic<bool>& program_is_runni
 				}
 
 				for(char c : message_char_table){
-					std::cout << int(c) << " ";
+					std::cout << c << " ";
 				}
 				std::cout << "\n";
 

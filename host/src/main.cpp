@@ -1,4 +1,5 @@
 #include "AudioController.hpp"
+#include "KeyController.hpp"
 #include "PerformanceMonitor.hpp"
 #include "VideoColorMonitor.hpp"
 #include "Receiver.hpp"
@@ -9,7 +10,7 @@
 #include <atomic>
 #include <chrono>
 
-#define MESSAGING_ENABLED 0
+#define MESSAGING_ENABLED 1
 
 void outcoming_thread_function(MsgQueue & to_send_queue, std::atomic<bool>& arduino_running, AudioController & audio_controller){
     PerformanceMonitor performance_monitor;
@@ -71,37 +72,27 @@ int main(){
     Codec codec;
     Transmitter transmitter(to_send_queue, is_running);
     AudioController audio_controller;
+    KeyController key_controller;
     std::thread outcoming_thread(outcoming_thread_function, std::ref(to_send_queue), std::ref(arduino_running), std::ref(audio_controller));
     for (;;) {
         Message received = received_queue.dequeue();
         switch(received.header){
-            // case ASND:
-            //     std::cout << received.numeric << std::endl;
-            //     break;
             case ERDY:
                 if(!arduino_running.load()){
                     arduino_running.store(true);
                 }
-                std::cout << "YOOOOOO" <<std::endl;
                 break;
             case ASET:
-                std::cout << "a RCV: " << received.numeric << std::endl;
+                //std::cout << "a RCV: " << received.numeric << std::endl;
                 audio_controller.setLevel(received.numeric);
                 break;
-            // case TSND:
-            //     std::cout << "TGOT: " << received.numeric << std::endl;
-            //     break;
-            // case CSND:
-            //     std::cout << "CGOT: " << received.numeric << std::endl;
-            //     break;
-            // case RSND:
-            //     std::cout << "RGOT: " << received.numeric << std::endl;
-            //     break;
             case KEYP:
-                std::cout << "KEYP: " << received.numeric << std::endl;
+                //std::cout << "KEYP: " << received.numeric << std::endl;
+                key_controller.keyPress(received.numeric);
                 break;
             case HGET:
-                //keyctrl
+                Message help_message(HSND, key_controller.getHelp(received.numeric));
+                to_send_queue.enqueue(help_message);
                 break;
         }
 	}

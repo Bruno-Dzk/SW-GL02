@@ -158,11 +158,11 @@ void sndTaskFunction(void * pvParameters)
           send_message(to_send);
           vTaskDelay( 1 );
         }
-        /*unsigned long val = analogRead(2);
+        unsigned long val = analogRead(2);
         Message audiomsg;
         audiomsg.header = ASET;
         audiomsg.numeric = val;
-        send_message(audiomsg);*/
+        send_message(audiomsg);
         vTaskDelay( 2 );
         xSemaphoreGive(binarysem);
     }
@@ -193,8 +193,8 @@ void setup()
     //Do tej kolejki się podpinacie elegancko
     lcd_q = xQueueCreate( 10, sizeof( struct Message ) );
     
-    xTaskCreate(rcvTaskFunction,"rcv_task", 400, ( void * ) 1, 1, &rcvHandle);
-    xTaskCreate(sndTaskFunction,"snd_task", 256, ( void * ) 1, 1, &sndHandle);
+    xTaskCreate(rcvTaskFunction,"rcv_task", 400, ( void * ) 1, 2, &rcvHandle);
+    xTaskCreate(sndTaskFunction,"snd_task", 256, ( void * ) 1, 2, &sndHandle);
     xTaskCreate(keyTaskFunction,"key_task", 256, ( void * ) to_send_q, 1, &keyHandle);
 
     //////////////////////
